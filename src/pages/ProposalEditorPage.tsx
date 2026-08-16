@@ -11,12 +11,15 @@ import {
   ChevronRight,
   AlertCircle,
   FileCheck,
+  Calculator,
+  Edit3,
 } from 'lucide-react';
-import { Proposal, ProposalSection, ProposalVersion, AgencySettings } from '../types';
+import { Proposal, ProposalSection, ProposalVersion, AgencySettings, PricingConfig } from '../types';
 import { RichTextEditor } from '../components/RichTextEditor';
 import { RegenerateModal } from '../components/RegenerateModal';
 import { VersionHistoryDrawer } from '../components/VersionHistoryDrawer';
 import { ProposalPreviewModal } from '../components/ProposalPreviewModal';
+import { PricingCalculator } from '../components/PricingCalculator';
 import { api } from '../services/api';
 
 interface ProposalEditorPageProps {
@@ -34,6 +37,7 @@ export const ProposalEditorPage: React.FC<ProposalEditorPageProps> = ({
   const [versions, setVersions] = useState<ProposalVersion[]>([]);
   const [activeSectionKey, setActiveSectionKey] = useState<string>('cover_page');
   const [activeSectionContent, setActiveSectionContent] = useState<string>('');
+  const [pricingTabMode, setPricingTabMode] = useState<'calculator' | 'editor'>('calculator');
 
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -44,6 +48,7 @@ export const ProposalEditorPage: React.FC<ProposalEditorPageProps> = ({
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isRegenerateOpen, setIsRegenerateOpen] = useState(false);
+  const [isCalculatorModalOpen, setIsCalculatorModalOpen] = useState(false);
 
   const loadProposalData = async () => {
     setLoading(true);
@@ -180,6 +185,32 @@ export const ProposalEditorPage: React.FC<ProposalEditorPageProps> = ({
     }
   };
 
+  const handleApplyPricingCalculation = (markdownContent: string, config: PricingConfig) => {
+    if (!proposal) return;
+
+    // Update section 8 (pricing) content
+    const updatedSections = proposal.sections.map((s) =>
+      s.key === 'pricing'
+        ? { ...s, content: markdownContent, isCustomized: true, lastUpdated: new Date().toISOString() }
+        : s
+    );
+
+    const updatedProposal: Proposal = {
+      ...proposal,
+      pricingConfig: config,
+      sections: updatedSections,
+    };
+
+    setProposal(updatedProposal);
+
+    if (activeSectionKey === 'pricing') {
+      setActiveSectionContent(markdownContent);
+    }
+
+    setSaveMessage('Pricing calculation applied to Section 8: Pricing!');
+    setTimeout(() => setSaveMessage(null), 3500);
+  };
+
   return (
     <div className="space-y-6 pb-12">
       {/* Top Header Bar */}
@@ -187,7 +218,7 @@ export const ProposalEditorPage: React.FC<ProposalEditorPageProps> = ({
         <div className="flex items-center space-x-3">
           <button
             onClick={onBack}
-            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+            className="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer"
             title="Back to Directory"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -230,9 +261,19 @@ export const ProposalEditorPage: React.FC<ProposalEditorPageProps> = ({
             <option value="declined">Declined</option>
           </select>
 
+          {/* Pricing Calculator Tool Button */}
+          <button
+            onClick={() => setIsCalculatorModalOpen(true)}
+            className="px-3 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 border border-emerald-300 text-xs font-bold flex items-center space-x-1.5 transition-colors cursor-pointer shadow-2xs"
+            title="Open Pricing Calculator ($100/hr, 8h/day)"
+          >
+            <Calculator className="w-4 h-4 text-emerald-600" />
+            <span className="hidden sm:inline">Pricing Calculator</span>
+          </button>
+
           <button
             onClick={() => setIsHistoryOpen(true)}
-            className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center space-x-1.5 transition-colors"
+            className="px-3 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center space-x-1.5 transition-colors cursor-pointer"
           >
             <History className="w-4 h-4 text-blue-600" />
             <span className="hidden sm:inline">Versions</span>
@@ -240,7 +281,7 @@ export const ProposalEditorPage: React.FC<ProposalEditorPageProps> = ({
 
           <button
             onClick={() => setIsPreviewOpen(true)}
-            className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center space-x-1.5 transition-colors shadow-2xs"
+            className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold flex items-center space-x-1.5 transition-colors shadow-2xs cursor-pointer"
           >
             <Eye className="w-4 h-4 text-blue-400" />
             <span>Preview & Export PDF</span>
@@ -280,24 +321,32 @@ export const ProposalEditorPage: React.FC<ProposalEditorPageProps> = ({
           <div className="space-y-1">
             {proposal.sections.map((s, idx) => {
               const isActive = s.key === activeSectionKey;
+              const isPricing = s.key === 'pricing';
+
               return (
                 <button
                   key={s.id}
                   onClick={() => handleSelectSection(s.key)}
-                  className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-medium transition-all flex items-center justify-between ${
+                  className={`w-full text-left px-3 py-2.5 rounded-xl text-xs font-medium transition-all flex items-center justify-between cursor-pointer ${
                     isActive
                       ? 'bg-blue-600 text-white shadow-xs font-bold'
                       : 'text-slate-700 hover:bg-slate-100'
                   }`}
                 >
-                  <span className="truncate pr-2">{s.title}</span>
-                  {s.isCustomized ? (
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${isActive ? 'bg-blue-700 text-white' : 'bg-slate-200 text-slate-700'}`}>
-                      Edited
-                    </span>
-                  ) : (
-                    <FileCheck className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-white' : 'text-emerald-500'}`} />
-                  )}
+                  <div className="flex items-center space-x-2 truncate pr-1">
+                    {isPricing && <Calculator className={`w-3.5 h-3.5 shrink-0 ${isActive ? 'text-emerald-300' : 'text-emerald-600'}`} />}
+                    <span className="truncate">{s.title}</span>
+                  </div>
+
+                  <div className="flex items-center space-x-1.5 shrink-0">
+                    {s.isCustomized ? (
+                      <span className={`text-[10px] px-1.5 py-0.5 rounded font-bold ${isActive ? 'bg-blue-700 text-white' : 'bg-slate-200 text-slate-700'}`}>
+                        Edited
+                      </span>
+                    ) : (
+                      <FileCheck className={`w-3.5 h-3.5 ${isActive ? 'text-white' : 'text-emerald-500'}`} />
+                    )}
+                  </div>
                 </button>
               );
             })}
@@ -309,26 +358,79 @@ export const ProposalEditorPage: React.FC<ProposalEditorPageProps> = ({
           {/* Section Header Controls */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-4">
             <div>
-              <div className="text-xs font-bold text-blue-600 uppercase tracking-wider">
-                Section {activeSectionIdx + 1} of 16
+              <div className="text-xs font-bold text-blue-600 uppercase tracking-wider flex items-center space-x-2">
+                <span>Section {activeSectionIdx + 1} of 16</span>
+                {activeSectionKey === 'pricing' && (
+                  <span className="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded-full font-bold">
+                    $100/hr &bull; 8h/day Calculator
+                  </span>
+                )}
               </div>
               <h2 className="text-lg font-black text-slate-900 tracking-tight">{activeSection.title}</h2>
             </div>
 
-            <button
-              onClick={() => setIsRegenerateOpen(true)}
-              className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-900 to-indigo-900 hover:from-blue-800 hover:to-indigo-800 text-white text-xs font-bold flex items-center space-x-1.5 shadow-2xs transition-all shrink-0 cursor-pointer"
-            >
-              <Sparkles className="w-4 h-4 text-blue-400" />
-              <span>Regenerate with AI</span>
-            </button>
+            <div className="flex items-center space-x-2">
+              {activeSectionKey === 'pricing' && (
+                <div className="bg-slate-100 p-1 rounded-xl flex items-center space-x-1 border border-slate-200">
+                  <button
+                    onClick={() => setPricingTabMode('calculator')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${
+                      pricingTabMode === 'calculator'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <Calculator className="w-3.5 h-3.5" />
+                    <span>Visual Calculator</span>
+                  </button>
+                  <button
+                    onClick={() => setPricingTabMode('editor')}
+                    className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center space-x-1.5 transition-all cursor-pointer ${
+                      pricingTabMode === 'editor'
+                        ? 'bg-blue-600 text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <Edit3 className="w-3.5 h-3.5" />
+                    <span>Rich Editor</span>
+                  </button>
+                </div>
+              )}
+
+              <button
+                onClick={() => setIsRegenerateOpen(true)}
+                className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-blue-900 to-indigo-900 hover:from-blue-800 hover:to-indigo-800 text-white text-xs font-bold flex items-center space-x-1.5 shadow-2xs transition-all shrink-0 cursor-pointer"
+              >
+                <Sparkles className="w-4 h-4 text-blue-400" />
+                <span>Regenerate with AI</span>
+              </button>
+            </div>
           </div>
 
-          {/* Section Rich Editor */}
-          <RichTextEditor
-            content={activeSectionContent}
-            onChange={handleEditorContentChange}
-          />
+          {/* Pricing Section Special Handling */}
+          {activeSectionKey === 'pricing' && pricingTabMode === 'calculator' ? (
+            <div className="space-y-4">
+              <PricingCalculator
+                initialConfig={proposal.pricingConfig}
+                clientCompany={proposal.clientCompany}
+                onApplyToSection={handleApplyPricingCalculation}
+              />
+              <div className="pt-2 text-center">
+                <button
+                  onClick={() => setPricingTabMode('editor')}
+                  className="text-xs text-blue-600 hover:text-blue-800 font-semibold underline underline-offset-2 cursor-pointer"
+                >
+                  Switch to Raw Rich Text / Markdown Editor
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* Standard Section Rich Editor */
+            <RichTextEditor
+              content={activeSectionContent}
+              onChange={handleEditorContentChange}
+            />
+          )}
 
           {/* Section Prev / Next Navigation */}
           <div className="pt-4 border-t border-slate-100 flex items-center justify-between">
@@ -340,7 +442,7 @@ export const ProposalEditorPage: React.FC<ProposalEditorPageProps> = ({
                   handleSelectSection(prevKey);
                 }
               }}
-              className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center space-x-1 disabled:opacity-40 transition-colors"
+              className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold flex items-center space-x-1 disabled:opacity-40 transition-colors cursor-pointer"
             >
               <ChevronLeft className="w-4 h-4" />
               <span>Previous Section</span>
@@ -354,7 +456,7 @@ export const ProposalEditorPage: React.FC<ProposalEditorPageProps> = ({
                   handleSelectSection(nextKey);
                 }
               }}
-              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center space-x-1 disabled:opacity-40 transition-colors"
+              className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold flex items-center space-x-1 disabled:opacity-40 transition-colors cursor-pointer"
             >
               <span>Next Section</span>
               <ChevronRight className="w-4 h-4" />
@@ -378,6 +480,17 @@ export const ProposalEditorPage: React.FC<ProposalEditorPageProps> = ({
         versions={versions}
         onRestoreVersion={handleRestoreVersion}
       />
+
+      {/* Global Pricing Calculator Modal (accessible from any section) */}
+      {isCalculatorModalOpen && (
+        <PricingCalculator
+          isModal
+          initialConfig={proposal.pricingConfig}
+          clientCompany={proposal.clientCompany}
+          onClose={() => setIsCalculatorModalOpen(false)}
+          onApplyToSection={handleApplyPricingCalculation}
+        />
+      )}
 
       {/* Full Document Preview & PDF Export Modal */}
       <ProposalPreviewModal

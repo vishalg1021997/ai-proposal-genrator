@@ -117,6 +117,38 @@ const SAMPLE_PROPOSAL_1: Proposal = {
   templateName: 'Enterprise Cloud & Web Architecture',
   tone: 'Professional & Formal',
   customNotes: 'Client requires SOC2 compliance, automated CI/CD deployment, and high concurrency support for seasonal traffic spikes.',
+  pricingConfig: {
+    hourlyRate: 100,
+    hoursPerDay: 8,
+    daysOfWork: 20,
+    currency: 'USD',
+    discountPercent: 0,
+    taxPercent: 0,
+    paymentTerms: '50% Initial Deposit upon signing, 25% at Midpoint Milestone, 25% upon Final Acceptance.',
+    items: [
+      {
+        id: 'item-1',
+        name: 'Phase 1: Architecture Blueprint & API Contracts',
+        days: 5,
+        hoursPerDay: 8,
+        hourlyRate: 100,
+      },
+      {
+        id: 'item-2',
+        name: 'Phase 2: Storefront & Mobile App Engineering',
+        days: 10,
+        hoursPerDay: 8,
+        hourlyRate: 100,
+      },
+      {
+        id: 'item-3',
+        name: 'Phase 3: Integration, Performance Tuning & Cutover',
+        days: 5,
+        hoursPerDay: 8,
+        hourlyRate: 100,
+      },
+    ],
+  },
   createdAt: new Date(Date.now() - 86400000 * 5).toISOString(),
   updatedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
   versionCount: 2,
@@ -224,9 +256,34 @@ The engagement encompasses four core workstreams executed over a 14-week timelin
       id: 'sec-8',
       key: 'pricing',
       title: '8. Pricing',
-      content: `### Commercial Investment & Pricing
+      content: `### 8. Commercial Investment & Pricing Model
 
-Pricing will be finalized after requirement discussion.`,
+The commercial structure for **Vanguard Retail Holdings** is calculated transparently based on verified engineering effort, hourly rate, and duration.
+
+#### 8.1 Rate & Baseline Assumptions
+- **Standard Hourly Rate:** $100.00 / hour
+- **Standard Working Day:** 8 hours / day ($800.00 / day)
+- **Estimated Work Duration:** 20 working days (~160 total engineering hours)
+
+#### 8.2 Deliverable & Milestone Cost Breakdown
+
+| Phase / Deliverable | Est. Days | Hours/Day | Hourly Rate | Total Investment |
+|---|---|---|---|---|
+| **Phase 1: Architecture Blueprint & API Contracts** | 5 days | 8 hrs | $100.00/hr | $4,000.00 |
+| **Phase 2: Storefront & Mobile App Engineering** | 10 days | 8 hrs | $100.00/hr | $8,000.00 |
+| **Phase 3: Integration, Performance Tuning & Cutover** | 5 days | 8 hrs | $100.00/hr | $4,000.00 |
+
+#### 8.3 Financial Summary
+
+| Item | Amount (USD) |
+|---|---|
+| **Base Subtotal (160 hrs @ $100.00/hr)** | **$16,000.00** |
+| **Total Project Investment** | **$16,000.00 USD** |
+
+#### 8.4 Payment Terms & Invoicing Schedule
+50% Initial Deposit upon signing, 25% at Midpoint Milestone, 25% upon Final Acceptance.
+
+*All pricing quotes are valid for 30 calendar days from the date of issuance.*`,
     },
     {
       id: 'sec-9',

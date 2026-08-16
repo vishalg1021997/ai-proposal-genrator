@@ -9,6 +9,25 @@ export interface ProposalSection {
   lastUpdated?: string;
 }
 
+export interface PricingItem {
+  id: string;
+  name: string;
+  days: number;
+  hoursPerDay: number;
+  hourlyRate: number;
+}
+
+export interface PricingConfig {
+  hourlyRate: number; // default: 100
+  hoursPerDay: number; // default: 8
+  daysOfWork: number; // default: 20
+  currency: string; // default: 'USD'
+  discountPercent?: number;
+  taxPercent?: number;
+  paymentTerms?: string;
+  items?: PricingItem[];
+}
+
 export interface Proposal {
   id: string;
   title: string;
@@ -22,6 +41,7 @@ export interface Proposal {
   templateName?: string;
   tone: string; // e.g. "Professional & Formal", "Persuasive & Innovative", "Technical & Precise"
   customNotes?: string;
+  pricingConfig?: PricingConfig;
   createdAt: string;
   updatedAt: string;
   sections: ProposalSection[];
