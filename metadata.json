@@ -1,0 +1,8 @@
+{
+  "name": "AI Proposal Generator",
+  "description": "Internal agency application for generating, customizing, versioning, and exporting enterprise project proposals using Gemini AI.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
